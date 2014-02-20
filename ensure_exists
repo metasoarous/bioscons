@@ -1,0 +1,34 @@
+#!/usr/bin/env python
+
+import argparse
+import time
+from os import path
+
+
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('target')
+    parser.add_argument('-i', '--interval', type=float, default=0.1, help="in seconds")
+    parser.add_argument('-m', '--max-wait', type=float, default=20, help="in seconds")
+    parser.add_argument('-f', '--fail', action="store_true", default=False)
+    return parser.parse_args()
+
+
+def main(args):
+    t = time.time()
+    while time.time() - t < args.max_wait:
+        if path.exists(args.target):
+            return 0
+        time.sleep(args.interval)
+
+    error_message = "File %s was not found after %s sec" % (args.target, args.max_wait)
+    if args.fail:
+        raise Exception, error_message
+    else:
+        print error_message
+
+
+if __name__ == '__main__':
+    main(get_args())
+
+

@@ -32,10 +32,13 @@ class SlurmEnvironment(SConsEnvironment):
     The SRun and SAlloc methods can be used to use multiple cores for
     multithreaded and MPI jobs, respectively.
     """
-    def __init__(self, use_cluster=True, slurm_queue=None, shell='sh', all_precious=False, **kwargs):
+    def __init__(self, use_cluster=True, slurm_queue=None, shell='sh', all_precious=False,
+            ensure_exists=False, ensure_max=60, **kwargs):
         super(SlurmEnvironment, self).__init__(**kwargs)
         self.use_cluster = use_cluster
         self.all_precious = all_precious
+        self.ensure_exists = ensure_exists
+        self.ensure_max = ensure_max
         if slurm_queue:
             self.SetPartition(slurm_queue)
         self.shell = shell
@@ -44,14 +47,19 @@ class SlurmEnvironment(SConsEnvironment):
         return '{shell} -c {action}'.format(shell=self.shell,
                 action=_quote(action))
 
-    def _SlurmCommand(self, target, source, action, slurm_command='srun', precious=False, **kw):
+    def _SlurmCommand(self, target, source, action, slurm_command='srun', precious=False,
+            ensure_exists=None, ensure_max=None, **kw):
         slurm_args = kw.pop('slurm_args', '')
+        ensure_exists = self.ensure_exists if (ensure_exists is None) else ensure_exists
         if self.use_cluster:
             action = '{cmd} {slurm_args} -J "{name}" {action}'.format(
                     cmd=slurm_command,
                     slurm_args=slurm_args,
                     name=_action_name(action),
                     action=self._quote_action(action))
+            if ensure_exists and target:
+                action += " && ensure_exists -m %s $TARGET" % (ensure_max or self.ensure_max)
+
         result = super(SlurmEnvironment, self).Command(target, source, action,
                 **kw)
         if self.all_precious or precious:
@@ -92,6 +100,8 @@ class SlurmEnvironment(SConsEnvironment):
         Optional arguments:
         ``slurm_args``: Additional arguments to pass to salloc
         ``timelimit``: Value to use for environment variable SLURM_TIMELIMIT
+        ``ensure_exists``: Make sure the target exists before returning from action
+        ``ensure_max``: Maximum seconds to wait for file to exist in ensure_exists
         """
         clone = self.Clone()
         if ncores > 1:
