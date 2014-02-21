@@ -48,10 +48,10 @@ class SlurmEnvironment(SConsEnvironment):
         return '{shell} -c {action}'.format(shell=self.shell,
                 action=_quote(action))
 
-    def _SlurmCommand(self, target, source, action, slurm_command='srun', precious=False,
-            ensure_exists=None, ensure_max=None, **kw):
-        slurm_args = kw.pop('slurm_args', self.slurm_args)
-        ensure_exists = self.ensure_exists if (ensure_exists is None) else ensure_exists
+    def _SlurmCommand(self, target, source, action, slurm_command='srun', precious=False, *kw):
+        slurm_args = kw.pop('slurm_args', '')
+        ensure_exists = kw.pop('ensure_exists', self.ensure_exists)
+        ensure_max = kw.pop('ensure_max', self.ensure_max)
         if self.use_cluster:
             action = '{cmd} {slurm_args} -J "{name}" {action}'.format(
                     cmd=slurm_command,
@@ -59,10 +59,9 @@ class SlurmEnvironment(SConsEnvironment):
                     name=_action_name(action),
                     action=self._quote_action(action))
             if ensure_exists and target:
-                action += " && ensure_exists -m %s $TARGET" % (ensure_max or self.ensure_max)
+                action += " && ensure_exists -m %s $TARGET" % ensure_max
 
-        result = super(SlurmEnvironment, self).Command(target, source, action,
-                **kw)
+        result = super(SlurmEnvironment, self).Command(target, source, action, **kw)
         if self.all_precious or precious:
             self.Precious(result)
         return result
