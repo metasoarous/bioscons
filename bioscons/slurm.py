@@ -48,8 +48,8 @@ class SlurmEnvironment(SConsEnvironment):
         return '{shell} -c {action}'.format(shell=self.shell,
                 action=_quote(action))
 
-    def _SlurmCommand(self, target, source, action, slurm_command='srun', precious=False, *kw):
-        slurm_args = kw.pop('slurm_args', '')
+    def _SlurmCommand(self, target, source, action, slurm_command='srun', precious=False, **kw):
+        slurm_args = kw.pop('slurm_args', self.slurm_args)
         ensure_exists = kw.pop('ensure_exists', self.ensure_exists)
         ensure_max = kw.pop('ensure_max', self.ensure_max)
         if self.use_cluster:
