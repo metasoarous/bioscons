@@ -33,13 +33,13 @@ class SlurmEnvironment(SConsEnvironment):
     multithreaded and MPI jobs, respectively.
     """
     def __init__(self, use_cluster=True, slurm_queue=None, shell='sh', all_precious=False,
-            ensure_exists=False, ensure_max=60, slurm_args='', **kwargs):
+            ensure_exists=False, ensure_max=60, srun_args='', **kwargs):
         super(SlurmEnvironment, self).__init__(**kwargs)
         self.use_cluster = use_cluster
         self.all_precious = all_precious
         self.ensure_exists = ensure_exists
         self.ensure_max = ensure_max
-        self.slurm_args = slurm_args
+        self.srun_args = srun_args
         if slurm_queue:
             self.SetPartition(slurm_queue)
         self.shell = shell
@@ -49,7 +49,7 @@ class SlurmEnvironment(SConsEnvironment):
                 action=_quote(action))
 
     def _SlurmCommand(self, target, source, action, slurm_command='srun', precious=False, **kw):
-        slurm_args = kw.pop('slurm_args', self.slurm_args)
+        slurm_args = kw.pop('slurm_args', self.srun_args)
         ensure_exists = kw.pop('ensure_exists', self.ensure_exists)
         ensure_max = kw.pop('ensure_max', self.ensure_max)
         if self.use_cluster:
