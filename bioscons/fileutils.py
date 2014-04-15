@@ -55,7 +55,9 @@ else:
         """
 
         def __init__(self, objs = None):
-            self.targets = self.update(objs) if objs else set()
+            self.targets = set()
+            if objs:
+                self.update(objs)
 
         def update(self, objs):
             """
@@ -64,22 +66,27 @@ else:
             to each target (ie, those objects with a "NodeInfo"
             attribute).
             """
-
             self.targets.update(
                 set(str(obj) for obj in Flatten(objs) if hasattr(obj, 'NodeInfo')))
 
-        def show_extras(self, directory, one_line = True):
+        def extras(self, directory):
             """
-            Given a relative path `directory` search for files recursively
-            and print a list of those not found among
-            `self.targets`. Print one path per line if `one_line` is
-            False.
+            Given a relative path `directory`, search for files recursively and return
+            those not also found in `self.targets`.
             """
-
             outfiles = set(
                 Flatten([[path.join(d, f) for f in ff] for d, _, ff in os.walk(directory)]))
 
-            extras = outfiles - self.targets
+            return outfiles - self.targets
+
+
+        def show_extras(self, directory, one_line = True):
+            """
+            Given a relative path `directory`, search for files recursively and print
+            those not also found in `self.targets`. Print one path per line if `one_line`
+            is False.
+            """
+            extras = self.extras(directory)
             if extras:
                 print '\nextraneous files in %s:' % directory
                 if one_line:
